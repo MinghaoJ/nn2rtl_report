@@ -1,4 +1,4 @@
-\documentclass{uw-ece-wkrpt}
+\documentclass[draft]{uw-ece-wkrpt}
 \usepackage[no-math]{fontspec}
 \usepackage[hidelinks]{hyperref}
 \usepackage[backend=biber,style=ieee]{biblatex}
@@ -6,7 +6,7 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage[binary-units]{siunitx}
-\usepackage{listings}
+\usepackage[final]{listings}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{tabularx}
 \usepackage{booktabs}
@@ -19,7 +19,7 @@
 \sisetup{detect-all}
 \lstset{
     frame=single,
-    basicstyle=\fontspec{Menlo}\footnotesize,
+    basicstyle=\footnotesize,%\fontspec{Menlo}\footnotesize,
     tabsize=4,
     commentstyle=\color{CadetBlue},    % comment style
     keywordstyle=\bfseries\color{OliveGreen},       % keyword style
@@ -289,7 +289,7 @@ Instead, each unique \gls{filter} receives dedicated hardware, and their matrix 
 
 In this architecture, the number of multipliers in a layer is greatly reduced. Each layer now contains a set of convolution engines, which would perform the \glspl{mac} of a subset of a layer's \glspl{filter} in parallel. This results in the \gls{filter} values needing to be stored and quickly accessed. The \gls{fpga} contains many banks of on-chip distributed \gls{sram} blocks, called \glspl{bram} which can be quickly accessed. The amount of memory resources vastly outnumbers the logic elements \cite{Intel-Corp.2018IntelR-ArriaR-1}. Thus, by using variable input multipliers and leveraging the on-chip memory, the number of multiplication resources can be reduced, allowing the fit of a larger network. However, latency and memory requirements increase. Furthermore, the memory resources now limit the size of the network which can be fit because the memory is shared between inter-layer results and \gls{filter} values.
 
-\subsubsection{Layer-Scheduled Multiplier Sharing}
+\subsubsection{Layer-Scheduled Shared Multipliers}
 
 \begin{figure}
     \centering
@@ -297,9 +297,7 @@ In this architecture, the number of multipliers in a layer is greatly reduced. E
     \caption{Layer-scheduled multiplier sharing \cite{Ma2017An-automatic-RT}}\label{fig:layer_scheduled_multiplier}
 \end{figure}
 
-A third and final architectural approach maximizes hardware reuse by implementing a shared multiplier bank and layer-processing bank between all layers. A central sequencer controls the execution order of a bank of layer-based macro blocks. Each different type of layer would have a single bank of resources which is reused every time the layer type is processed. The sequencer addresses the bank of weights and the input matrix buffer to load the operands to the shared multiplier bank. The layer macro then processes the results of the multiplication based on the layer type\textemdash{}for instance, a convolution macro would contain a bank of adders to accumulate the results of the multiply. The results of the layer are stored in an output buffer. When a layer has finished, the output buffer is swapped with the input buffer such that the next layer would use the results of the current layer, maximizing memory resource reutilization.
-
-A major benefit of this architecture is that it allows the leveraging of larger, off-chip \gls{dram} to store parameters by using the on-chip parameter \gls{bram} as a cache. This allows a very deep network with many layers and weights to be implemented on the \gls{fpga}.
+A third architectural approach maximizes hardware reuse by implementing a shared multiplier bank between many layers. A central sequencer controls the memory addresses and execution order of each layer in the shared pipeline. Each different type of layer is mapped to a bank of resources which are reused every time the layer type is processed. The sequencer addresses the parameter memory and the input data memory to load the operands to the shared multiplier bank. The layer macro then processes the results of the multiplication based on the layer type \textemdash{} for instance, a convolution macro would contain a bank of adders and accumulators to sum the results of the multiplier bank. The results of the layer are then stored into the output data memory. When a layer has finished, the output memory is swapped with the input memory such that the next layer would use the results of the current layer, maximizing memory resource reutilization.
 
 \subsubsection{Decision}
 
@@ -372,7 +370,7 @@ Shared-Multiplier & 10            & 10             & 1          & 1       & \tex
 \end{tabular}
 \end{table}
 
-The ability for this architecture to leverage off-chip \gls{dram} allows very large models to be used. While a \gls{dram} load is very slow compared to the \glspl{sram} on-chip, the sequencer can pipeline the slower load while a layer has loaded its last set of weights and is processing. The throughput of the system can be further improved by optimizing the scheduling and pipelining the logic to allow the \gls{fpga} to run at a faster clock.  Therefore, this architecture is the best approach for the \gls{rtl} generation tool, giving the most flexibility and practicality in the \glspl{neural_net} that can be used.
+The ability for this architecture to maximally reuse on-chip \gls{dram} allows larger models to be processed. The throughput of the system can be further improved by optimizing the scheduling and pipelining the logic to allow the \gls{fpga} to run at a faster clock.  Therefore, this architecture is the best approach for the \gls{rtl} generation tool, giving the most flexibility and practicality in the \glspl{neural_net} that can be used.
 
 \subsection{Model Analysis}
 
