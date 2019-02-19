@@ -15,7 +15,7 @@
 *.lot
 *.out
 
-*.pdf
+./*.pdf
 
 *.run.xml
 *.toc
