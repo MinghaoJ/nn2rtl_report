@@ -13,9 +13,6 @@
 \usepackage[tableposition=top]{caption}
 \usepackage{float}
 
-\usepackage[firstpage]{draftwatermark}
-\SetWatermarkText{DRAFT}
-
 \setmonofont{Inconsolata for Powerline}[
     BoldFont = Inconsolata Bold for Powerline,
 ]
@@ -98,8 +95,8 @@ We have been very fortunate to have subject matter experts, such as the ones abo
 \tableofcontents
 \listoffigures
 \listoftables
-\addcontentsline{toc}{section}{Listings}
 \lstlistoflistings
+\addcontentsline{toc}{section}{Listings}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% REPORT BODY
@@ -272,7 +269,7 @@ Several broad classes of architectures were explored to determine a framework wi
 
 \subsubsection{Direct Hardware Mapping}
 
-The primary approach to mapping a \gls{neural_net} in hardware is to create dedicated hardware for each operation in the \gls{neural_net} evaluation. At the core of the \gls{cnn} is the convolution operation, where a two-dimensional matrix of weights (\gls{kernel}) sweeps across the entire input matrix, calculating the inner product of the kernels and the window over which it is convolving. Within the layer, each \gls{kernel} has a constant dimension. The kernels are learned in the training phase of the network.
+The primary approach to mapping a \gls{neural_net} in hardware is to create dedicated hardware for each operation in the \gls{neural_net} evaluation, shown in Figure \ref{fig:direct_hardware_mapping}. At the core of the \gls{cnn} is the convolution operation, where a two-dimensional matrix of weights (\gls{kernel}) sweeps across the entire input matrix, calculating the inner product of the kernels and the window over which it is convolving. Within the layer, each \gls{kernel} has a constant dimension. The kernels are learned in the training phase of the network.
 
 \begin{figure}
     \centering
@@ -288,7 +285,7 @@ Instead, each unique \gls{filter} receives dedicated hardware, and their matrix 
 
 \subsubsection{Layer-Based Processing Banks}
 
-In this architecture, the number of multipliers in a layer is greatly reduced. Each layer now contains a set of convolution engines, which would perform the \glspl{mac} of a subset of a layer's \glspl{filter} in parallel. This results in the \gls{filter} values needing to be stored and quickly accessed. The \gls{fpga} contains many banks of on-chip distributed \gls{sram} blocks, called \glspl{bram} which can be quickly accessed. The amount of memory resources vastly outnumbers the logic elements \cite{Intel-Corp.2018IntelR-ArriaR-1}. Thus, by using variable input multipliers and leveraging the on-chip memory, the number of multiplication resources can be reduced, allowing the fit of a larger network. However, latency and memory requirements increase. Furthermore, the memory resources now limit the size of the network which can be fit because the memory is shared between inter-layer results and \gls{filter} values.
+In this architecture, the number of multipliers in a layer is greatly reduced. As shown in Figure \ref{fig:layer-based_processing}, each layer now contains a set of convolution engines, which would perform the \glspl{mac} of a subset of a layer's \glspl{filter} in parallel. This results in the \gls{filter} values needing to be stored and quickly accessed. The \gls{fpga} contains many banks of on-chip distributed \gls{sram} blocks, called \glspl{bram} which can be quickly accessed. The amount of memory resources vastly outnumbers the logic elements \cite{Intel-Corp.2018IntelR-ArriaR-1}. Thus, by using variable input multipliers and leveraging the on-chip memory, the number of multiplication resources can be reduced, allowing the fit of a larger network. However, latency and memory requirements increase. Furthermore, the memory resources now limit the size of the network which can be fit because the memory is shared between inter-layer results and \gls{filter} values.
 
 \begin{figure}
     \centering
@@ -298,7 +295,7 @@ In this architecture, the number of multipliers in a layer is greatly reduced. E
 
 \subsubsection{Layer-Scheduled Shared Multipliers}
 
-A third architectural approach maximizes hardware reuse by implementing a shared multiplier bank between many layers. A central sequencer controls the memory addresses and execution order of each layer in the shared pipeline. Each different type of layer is mapped to a bank of resources which are reused every time the layer type is processed. The sequencer addresses the parameter memory and the input data memory to load the operands to the shared multiplier bank. The layer macro then processes the results of the multiplication based on the layer type \textemdash{} for instance, a convolution macro would contain a bank of adders and accumulators to sum the results of the multiplier bank. The results of the layer are then stored into the output data memory. When a layer has finished, the output memory is swapped with the input memory such that the next layer would use the results of the current layer, maximizing memory resource reutilization.
+A third architectural approach shown in Figure \ref{fig:shared_multiplier} maximizes hardware reuse by implementing a shared multiplier bank between many layers. A central sequencer controls the memory addresses and execution order of each layer in the shared pipeline. Each different type of layer is mapped to a bank of resources which are reused every time the layer type is processed. The sequencer addresses the parameter memory and the input data memory to load the operands to the shared multiplier bank. The layer macro then processes the results of the multiplication based on the layer type \textemdash{} for instance, a convolution macro would contain a bank of adders and accumulators to sum the results of the multiplier bank. The results of the layer are then stored into the output data memory. When a layer has finished, the output memory is swapped with the input memory such that the next layer would use the results of the current layer, maximizing memory resource reutilization.
 
 \begin{figure}
     \centering
@@ -533,7 +530,7 @@ Every type of macro will be pipelined to maximize clock frequency. Each function
 \caption{Convolution macro block \cite{Ma2017An-automatic-RT}}\label{fig:convolution_macro}
 \end{figure}
 
-Modern convolutional \glspl{neural_net} often contain residual blocks (Howard, et al., 2017). Residual blocks add a connection between two layers of the same dimensions, summing the input of the first layer to the output of the second layer. To accommodate for this operation, a macro block containing a memory for temporarily storing the inputs to the first layer when it is being processed, and then adding the results of the second layer after it has been processed, is created. The residual pipeline is a simple adder array which adds two equal dimension arrays. The pipeline is similarly parameterized, and the parameters are generated during model analysis. It is controlled by the sequencer using dedicated microcode for flagging residual layers.
+Modern convolutional \glspl{neural_net} often contain residual blocks (Howard, et al., 2017). Residual blocks add a connection between two layers of the same dimensions, summing the input of the first layer to the output of the second layer. This is shown in Figure \ref{fig:residual_addition}. To accommodate for this operation, a macro block containing a memory for temporarily storing the inputs to the first layer when it is being processed, and then adding the results of the second layer after it has been processed, is created. The residual pipeline is a simple adder array which adds two equal dimension arrays. The pipeline is similarly parameterized, and the parameters are generated during model analysis. It is controlled by the sequencer using dedicated microcode for flagging residual layers.
 
 \begin{figure}
 \centering
@@ -541,7 +538,7 @@ Modern convolutional \glspl{neural_net} often contain residual blocks (Howard, e
 \caption{Residual addition}\label{fig:residual_addition}
 \end{figure}
 
-Some \glspl{neural_net} contain pooling operations. A pooling macro down samples the input volume by either taking the maximum or average of a window of the input volume and outputting it to an output volume. Depending on the type of pooling layers, a pooling macro may contain a bank of comparators to select the maximum value, or an accumulated divider to average the input values.
+Some \glspl{neural_net} contain pooling operations. A pooling macro (shown in Figure \ref{fig:pooling_macro}) down samples the input volume by either taking the maximum or average of a window of the input volume and outputting it to an output volume. Depending on the type of pooling layers, a pooling macro may contain a bank of comparators to select the maximum value, or an accumulated divider to average the input values.
 
 \begin{figure}
 \centering
