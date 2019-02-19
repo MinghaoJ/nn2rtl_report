@@ -12,6 +12,27 @@
 \usepackage{booktabs}
 \usepackage[tableposition=top]{caption}
 \usepackage{float}
+\usepackage{flafter}
+
+% Alter some LaTeX defaults for better treatment of figures:
+% See p.105 of "TeX Unbound" for suggested values.
+% See pp. 199-200 of Lamport's "LaTeX" book for details.
+%   General parameters, for ALL pages:
+\renewcommand{\topfraction}{0.9}    % max fraction of floats at top
+\renewcommand{\bottomfraction}{0.8} % max fraction of floats at bottom
+%   Parameters for TEXT pages (not float pages):
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}     % 2 may work better
+\setcounter{dbltopnumber}{2}    % for 2-column pages
+\renewcommand{\dbltopfraction}{0.9} % fit big float above 2-col. text
+\renewcommand{\textfraction}{0.07}  % allow minimal text w. figs
+%   Parameters for FLOAT pages (not text pages):
+\renewcommand{\floatpagefraction}{0.7}  % require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+\renewcommand{\dblfloatpagefraction}{0.7}   % require fuller float pages
+
+% remember to use [htp] or [htpb] for placement
 
 \setmonofont{Inconsolata for Powerline}[
     BoldFont = Inconsolata Bold for Powerline,
@@ -153,8 +174,9 @@ Constraint Specification & Essential & The hardware resource constraints (i.e. l
 Model Ingestion & Essential & The user-trained model must be successfully ingested into an intermediate data graph. \\
 Model Analysis & Essential & Must accurately calculate user's model requirements for resources such as multipliers, adders, etc. \\
 Schedule Generation & Essential & Correct execution schedule must be generated for the generated hardware architecture. \\
-\gls{fpga} space constraints & Essential & Compressed model must be able to fit on the available \gls{fpga} area as specified by the user. \\
-Report of Optimization Metrics & Non-essential & Statistics such as \gls{fpga} area used and all optimizations made must be shown to the user so changes are transparent. \\
+\gls{neural_net} Model Support & Essential & Supports hardware generation for MobileNet V2 on Intel Arria 10 GX1150 \gls{fpga}. \\
+User Interface & Non-essential & Provides an intuitive and user-friendly interface. \\
+% Report of Optimization Metrics & Non-essential & Statistics such as \gls{fpga} area used and all optimizations made must be shown to the user so changes are transparent. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -168,12 +190,12 @@ Report of Optimization Metrics & Non-essential & Statistics such as \gls{fpga} a
 \toprule
 Specification & Necessity & Description \\
 \midrule
-Usability & Essential & User's interface with the program must be intuitive and easy to use. \\
 Locally Executable & Essential & Must be able to be run on a local workstation with Linux support. \\
 Process Runtime & Essential & The runtime of the system is less than 24 hours. \\
-Practicality & Essential & Able to fit industry-standard \gls{neural_net} models. \\
+% Practicality & Essential & Able to fit industry-standard \gls{neural_net} models. \\
 Scalability & Non-essential & The architecture of the software allows for expansion the use of large models. \\
 Power Usage & Non-essential & \gls{fpga} should consume less power than the CPU running the same neural net. \\
+Inference Speed & Non-essential & The generated hardware should run \gls{neural_net} inference at 10 frames-per-second. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -307,7 +329,7 @@ A third architectural approach shown in Figure \ref{fig:shared_multiplier} maxim
 
 The specification for this tool requires a hardware architecture class with the highest resource efficiency. That is, given a fixed \gls{fpga}, being able to fit the largest network at a high throughput. A weighted decision matrix is used to determine the most efficient solution. Between the proposed architectural approaches, several criteria are used to determine the best approach, shown in the Table \ref{tab:hw_arch_criteria}.
 
-\begin{table}[hbp]
+\begin{table}[b]
 \centering
 \caption{Hardware architecture class criteria}\label{tab:hw_arch_criteria}
 \begin{tabular}{lcccc}
@@ -502,7 +524,7 @@ Figure \ref{fig:sequencer} shows a functional diagram of the operation sequencer
 
 \begin{figure}
 \centering
-\includegraphics[width=0.7\textwidth]{figures/sequencer}
+\includegraphics[width=0.6\textwidth]{figures/sequencer}
 \caption{Operation sequencer}\label{fig:sequencer}
 \end{figure}
 
