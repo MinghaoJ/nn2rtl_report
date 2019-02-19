@@ -39,7 +39,7 @@
 \newlength{\marginr}
 \newlength{\margintb}
 
-\setlength{\marginl}{1.5in}
+\setlength{\marginl}{1in}
 \setlength{\marginr}{1in}
 \setlength{\margintb}{1in}
 
