@@ -114,7 +114,7 @@ TensorFlow also provides tools for optimizing \gls{neural_net} models. However, 
 
 \subsection{Project Objective}
 
-The objective of this project is to design a generalized tool that accepts a trained \gls{neural_net} and a list of configurations from a user, and output \gls{rtl} code that is deployable for an \gls{fpga}. This will allow developers and system architects a simple and fast tool to enable hardware acceleration in their systems with minimal additional investments. An additional feature will be network optimization performed by the tool before \gls{rtl} output. Model compression to directly improve the output hardware will be executed before an optimized hardware architecture is generated. This tool will hopefully enable more systems to take advantage of the performance gains that can be achieved by utilizing hardware acceleration.
+The objective of this project is to design a generalized tool that accepts a trained \gls{neural_net} and a list of configurations from a user, and output \gls{rtl} code that is deployable for an \gls{fpga}. This will allow developers and system architects a simple and fast tool to enable hardware acceleration in their systems with minimal additional investments. Model compression to directly improve the output hardware will be executed before an optimized hardware architecture is generated. This tool will hopefully enable more systems to take advantage of the performance gains that can be achieved by utilizing hardware acceleration.
 
 This tool will be built in collaboration with WATonomous (WATO) student design team at the University of Waterloo to accelerate the image recognition and classification algorithm for an autonomous vehicle. Because of this, the trained model and the integration of the \gls{fpga} into the vehicle will be completed by WATO.
 
@@ -293,7 +293,7 @@ In this architecture, the number of multipliers in a layer is greatly reduced. E
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{figures/shared_multiplier}
+    \includegraphics{figures/shared_multiplier}
     \caption{Shared multiplier \cite{Ma2017An-automatic-RT}}\label{fig:shared_multiplier}
 \end{figure}
 
