@@ -7,7 +7,7 @@
 \usepackage{amsmath}
 \usepackage[binary-units]{siunitx}
 \usepackage{listings}
-\usepackage[dvipsnames]{xcolor}
+\usepackage[svgnames]{xcolor}
 \usepackage{tabularx}
 \usepackage{booktabs}
 \usepackage[tableposition=top]{caption}
@@ -16,15 +16,22 @@
 \usepackage[firstpage]{draftwatermark}
 \SetWatermarkText{DRAFT}
 
+\setmonofont{Inconsolata for Powerline}[
+    BoldFont = Inconsolata Bold for Powerline,
+]
+
 \sisetup{detect-all}
 \lstset{
-    frame=single,
-    basicstyle=\fontspec{Menlo}\footnotesize,
+    basicstyle=\ttfamily\small,
+    upquote=true,
+    columns=fullflexible,
+    keepspaces=true,
     tabsize=4,
-    commentstyle=\color{CadetBlue},    % comment style
-    keywordstyle=\bfseries\color{OliveGreen},       % keyword style
-    stringstyle=\color{WildStrawberry},     % string literal style
-    %numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+    frame=single,
+    commentstyle=\color{gray},
+    keywordstyle=\bfseries\color{ForestGreen},
+    stringstyle=\color{violet},
+    numberstyle=\ttfamily\small\color{gray},
     belowcaptionskip=10pt,
 }
 
@@ -386,7 +393,7 @@ The footprint estimator provides an approximate count of \glspl{mac} required to
 
 \begin{table}
 \centering
-\caption{Equations for calculating the number of \glspl{mac} required}\label{tab:macs_required}
+\caption{Equations for calculating the number of MACs required}\label{tab:macs_required}
 \begin{tabular}{ll}
 \toprule
 Operation        & Equation \\
@@ -735,13 +742,13 @@ The parameters obtained during model analysis are used to generate hardware proc
 
 While the Verilog code of a single processing element such as an adder or a multiplier is trivial, the complexity of generating a large-scale \gls{neural_net} processing system is in connecting, controlling, and scheduling these processing elements. Some portions of the processing pipeline are organized into `banks' of parallel processing elements, such as adders and accumulators. These structures can be generated at \gls{rtl} compile time using Verilog parameters which are filled in using the output values of model analysis.
 
-Listing \ref{lst:verilog_gen} shows the Verilog code for generating a bank of 8-bit multipliers. The only parameter which needs to be replaced is `NUM\_MULTIPLIERS' on line 2, corresponding to `mul\_bank' from the output of model analysis in Figure \ref{fig:model_analysis_output}. A generate block in Verilog generates an array of multipliers, which are connected to portions of the input and output vectors of the bank. This array of multipliers multiplies each 8-bit segment of its input vector with a \gls{weight} (input b), corresponding to the multiply operation of a 1x1 \gls{kernel}. The same structure extends to larger \gls{kernel} dimensions.
+Listing \ref{lst:verilog_gen} shows the Verilog code for generating a bank of 8-bit multipliers. The only parameter which needs to be replaced is `NUM\_MULTIPLIERS' on line \ref{line:n_mult}, corresponding to `mul\_bank' from the output of model analysis in Figure \ref{fig:model_analysis_output}. A generate block in Verilog generates an array of multipliers, which are connected to portions of the input and output vectors of the bank. This array of multipliers multiplies each 8-bit segment of its input vector with a \gls{weight} (input b), corresponding to the multiply operation of a 1x1 \gls{kernel}. The same structure extends to larger \gls{kernel} dimensions.
 
 \begin{figure}
 \centering
-\begin{lstlisting}[caption={Verilog compile-time generation}, label=lst:verilog_gen, language=Verilog]
+\begin{lstlisting}[caption={Verilog compile-time generation}, label=lst:verilog_gen, language=Verilog, escapechar=|, numbers=left, firstnumber=12]
 module multiplier_bank  #(
-    parameter NUM_MULTIPLIERS = 56,
+    parameter NUM_MULTIPLIERS = 56, |\label{line:n_mult}|
     parameter WIDTH_BITS_IN = NUM_MULTIPLIERS*8,
     parameter WIDTH_BITS_OUT = NUM_MULTIPLIERS*16
 )
@@ -769,30 +776,30 @@ This type of implementation results in Verilog native hardware generation suppor
 
 Another critical aspect of the hardware structure is the scheduling of the processing pipelines and memory addresses. To maintain identical functionality with a CPU implementation of the same network, memory addresses and control signals need to be correctly generated from the base values in the microcode so that the correct inputs are fed to the multipliers and accumulation is correctly performed.
 
-Listing \ref{lst:sequencer_fsm_1} contains sections of abbreviated code from a sequencer state machine for 1x1 convolutions. The state machine contains the counting logic to iterate through the four loops outlined in \ref{sec:scheduler}. In this sequencer state machine, the `CH\_LOOP' state starting at line 206 contains the counting logic and control signal generation to accumulate multiplication results over all input channels. The address offset registers used in lines 18 and 19 stores the offset values to add to the base address in the microcode to obtain the correct set of data. Loop counters are compared to microcode base values (such as in line 13) to correctly loop over the input \glspl{tensor} and \glspl{kernel}.
+Listing \ref{lst:sequencer_fsm_1} contains sections of abbreviated code from a sequencer state machine for 1x1 convolutions. The state machine contains the counting logic to iterate through the four loops outlined in \ref{sec:scheduler}. In this sequencer state machine, the `CH\_LOOP' state starting at line \ref{line:ch_loop} contains the counting logic and control signal generation to accumulate multiplication results over all input channels. The address offset registers used in lines \ref{line:in_offset} and \ref{line:kernel_offset} stores the offset values to add to the base address in the microcode to obtain the correct set of data. Loop counters are compared to microcode base values (such as in line \ref{line:loop_compare}) to correctly loop over the input \glspl{tensor} and \glspl{kernel}.
 
 \begin{figure}
 \centering
-\begin{lstlisting}[caption={Sequencer state machine part 1}, label=lst:sequencer_fsm_1, language=Verilog, escapechar= numbers=left, firstnumber=201]
+\begin{lstlisting}[caption={Sequencer state machine part 1}, label=lst:sequencer_fsm_1, language=Verilog, escapechar=|, numbers=left, firstnumber=201]
 IDLE: begin
    // wait to start loop
 end
 
-CH_LOOP: begin                // loop over all input channels
+CH_LOOP: begin                // loop over all input channels |\label{line:ch_loop}|
    pipeline_rstn_next = 1'b1; // unreset the pipeline
    mult_enable_next   = 1'b1; // enable multipliers
    acc_en_next        = 1'b1; // enable accumulation
    ...
 
-   if (reg_channel_count == NUM_INPUT_CHANNELS-1) begin
+   if (reg_channel_count == NUM_INPUT_CHANNELS-1) begin |\label{line:loop_compare}|
        // finished accumulation over all input channels, write out current tile
        next                  = WR_OUT;
    end else begin
        // haven't finished accumulation, read next input channel to accumulate
        // add offset to read address
-       in_ch_offset_next     = reg_in_ch_offset + NUM_TILES;
+       in_ch_offset_next     = reg_in_ch_offset + NUM_TILES; |\label{line:in_offset}|
        // add offset to kernel address
-       kernel_ch_offset_next = reg_kern_ch_offset + 1;
+       kernel_ch_offset_next = reg_kern_ch_offset + 1; |\label{line:kernel_offset}|
        // increment channel counter
        channel_count_next    = reg_channel_count + 1;
        // continue looping
