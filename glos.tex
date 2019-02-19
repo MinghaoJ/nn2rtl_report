@@ -1,0 +1,111 @@
+%%% Acronyms %%%
+
+\newacronym[%
+    description={Convolutional Neural Net, a deep, feed-forward neural network implemented generally for image recognition; uses convolution operations.}%
+]{cnn}{CNN}{Convolutional Neural Net}
+
+\newacronym[%
+    description={Directed Acyclic Graph, a graph with directed edges and contains no cycles.}%
+]{dag}{DAG}{Directed Acyclic Graph}
+
+\newacronym[%
+    description={Field Programmable Gate Array, an integrated circuit containing programmable logic cells.}%
+]{fpga}{FPGA}{Field Programmable Gate Array}
+
+\newacronym[%
+    description={Intellectual Property, specifically referring to vendor-designed circuit blocks.}%
+]{ip}{IP}{Intellectual Property}
+
+\newacronym[%
+    description={Logic Element, a unit of programmable logic cell implementing Boolean functions.}%
+]{le}{LE}{Logic Element}
+
+\newacronym[%
+    description={Multiply-Accumulate, an operation performed by a convolution, computable as an inner product of two matrices.}%
+]{mac}{MAC}{Multiply-Accumulate}
+
+\newacronym[%
+    description={Peripheral Component Interconnect Express, a high-speed data connection between system components such as CPU and memory and external components such as FPGAs and graphics cards.}%
+]{pcie}{PCIe}{Peripheral Component Interconnect Express}
+
+\newacronym[%
+    description={Random Access Memory. Data storage that can be arbitrarily addressed efficiently.}%
+]{ram}{RAM}{Random Access Memory}
+
+\newacronym[%
+    description={Block RAM (see RAM). A type of memory block in FPGA fabrics that can be linked together to create memoriy banks of various dimensions.}%
+]{bram}{BRAM}{Block RAM}
+
+\newacronym[%
+    description={Dynamic RAM (see RAM). RAM that cannot retain data indefinitely and requires periodic ``refreshing,'' where the data contents are read and re-written.}%
+]{dram}{DRAM}{Dynamic RAM}
+\glssee{dram}{ram}
+\glssee[Compare with:]{dram}{sram}
+
+\newacronym[%
+    description={Static RAM (see RAM). RAM that retains its data so long as it is powered (compare with DRAM).}%
+]{sram}{SRAM}{Static RAM}
+
+\newacronym[%
+    description={Read Only Memory. Data storage that is programmed once on creation of the ROM.}%
+]{rom}{ROM}{Read Only Memory}
+
+\newacronym[%
+    description={Rectified Linear Unit, a common activation function defined as $f(x) = \max(0, x)$.}%
+]{relu}{ReLU}{Rectified Linear Unit}
+
+\newacronym[%
+    description={Register Transfer Level, a language which describes hardware elements at the register level.}%
+]{rtl}{RTL}{Register Transfer Level}
+
+\newacronym[%
+    description={Robot Operating System, a framework for sensors, actuators, and processors to communicate.}%
+]{ros}{ROS}{Robot Operating System}
+
+\newacronym[%
+    description={Very-Large-Scale Integration, the technology of integrating a very large number of transistors (today billions) on a single piece of semiconductor, typically silicon.}%
+]{vlsi}{VLSI}{Very-Large-Scale Integration}
+
+%%% Glossary entries %%%
+
+\newglossaryentry{bias}
+{
+    name=Bias,
+    description={A neural network parameter that is added to the result of a kernel convolution.}
+}
+
+\newglossaryentry{conv_window}
+{
+    name=Convolution Window,
+    description={The region in an input matrix being multiplied by the kernel.}
+}
+
+\newglossaryentry{filter}
+{
+    name=Filter,
+    description={See Kernel.}
+}
+
+\newglossaryentry{kernel}
+{
+    name=Kernel,
+    description={a matrix of size n x n that is moved over the input image, taking the inner product with the input feature map to generate a point in the output feature map .}
+}
+
+\newglossaryentry{neural_net}
+{
+    name=Neural network,
+    description={Neural Network, a data processing paradigm that was inspired by the way the human brain processes information.}
+}
+
+\newglossaryentry{tensor}
+{
+    name=Tensor,
+    description={A generalized vector or matrix that could be of higher dimensions; represented as an n-dimensional array.}
+}
+
+\newglossaryentry{weight}
+{
+    name=Weight,
+    description={The value of an individual entry of a kernel.}
+}
