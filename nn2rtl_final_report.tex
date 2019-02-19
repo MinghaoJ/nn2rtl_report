@@ -293,8 +293,8 @@ In this architecture, the number of multipliers in a layer is greatly reduced. E
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{figures/layer-scheduled_multiplier}
-    \caption{Layer-scheduled multiplier sharing \cite{Ma2017An-automatic-RT}}\label{fig:layer_scheduled_multiplier}
+    \includegraphics[width=\textwidth]{figures/shared_multiplier}
+    \caption{Shared multiplier \cite{Ma2017An-automatic-RT}}\label{fig:shared_multiplier}
 \end{figure}
 
 A third architectural approach maximizes hardware reuse by implementing a shared multiplier bank between many layers. A central sequencer controls the memory addresses and execution order of each layer in the shared pipeline. Each different type of layer is mapped to a bank of resources which are reused every time the layer type is processed. The sequencer addresses the parameter memory and the input data memory to load the operands to the shared multiplier bank. The layer macro then processes the results of the multiplication based on the layer type \textemdash{} for instance, a convolution macro would contain a bank of adders and accumulators to sum the results of the multiplier bank. The results of the layer are then stored into the output data memory. When a layer has finished, the output memory is swapped with the input memory such that the next layer would use the results of the current layer, maximizing memory resource reutilization.
@@ -538,7 +538,7 @@ Some \glspl{neural_net} contain pooling operations. A pooling macro down samples
 
 \begin{figure}
 \centering
-\includegraphics[width=\textwidth]{figures/pooling_macro}
+\includegraphics{figures/pooling_macro}
 \caption{Pooling macro block \cite{Ma2017An-automatic-RT}}\label{fig:pooling_macro}
 \end{figure}
 
