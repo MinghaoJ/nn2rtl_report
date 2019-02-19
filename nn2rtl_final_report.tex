@@ -299,11 +299,11 @@ In this architecture, the number of multipliers in a layer is greatly reduced. E
 
 A third architectural approach maximizes hardware reuse by implementing a shared multiplier bank between many layers. A central sequencer controls the memory addresses and execution order of each layer in the shared pipeline. Each different type of layer is mapped to a bank of resources which are reused every time the layer type is processed. The sequencer addresses the parameter memory and the input data memory to load the operands to the shared multiplier bank. The layer macro then processes the results of the multiplication based on the layer type \textemdash{} for instance, a convolution macro would contain a bank of adders and accumulators to sum the results of the multiplier bank. The results of the layer are then stored into the output data memory. When a layer has finished, the output memory is swapped with the input memory such that the next layer would use the results of the current layer, maximizing memory resource reutilization.
 
-\subsubsection{Decision}
+\subsubsection{Decision}\label{sec:decision}
 
 The specification for this tool requires a hardware architecture class with the highest resource efficiency. That is, given a fixed \gls{fpga}, being able to fit the largest network at a high throughput. A weighted decision matrix is used to determine the most efficient solution. Between the proposed architectural approaches, several criteria are used to determine the best approach, shown in the Table \ref{tab:hw_arch_criteria}.
 
-\begin{table}
+\begin{table}[hbp]
 \centering
 \caption{Hardware architecture class criteria}\label{tab:hw_arch_criteria}
 \begin{tabular}{lcccc}
@@ -484,7 +484,7 @@ Where the PAD represents the zero padding and STRIDE represents the stride lengt
 
 \subsection{Top Level Hardware System Framework}\label{sec:top_level_framework}
 
-Figure \ref{fig:top_level} shows an example of a hardware system that can be generated, in this case based on MobileNet V2 \cite{Howard2017MobileNets:-Eff}. The framework of the hardware architecture remains fixed regardless of the \gls{neural_net} model. In Section 3, layer-scheduled multiplier sharing was the hardware framework selected for the generated system. % TODO
+In Section \ref{sec:decision}, the shared-multiplier hardware framework was selected for the generated system. Figure \ref{fig:top_level} shows an example of a hardware system that can be generated, in this case based on MobileNet V2 \cite{Howard2017MobileNets:-Eff}. The framework of the hardware architecture remains fixed regardless of the \gls{neural_net} model.
 
 \begin{figure}
 \centering
