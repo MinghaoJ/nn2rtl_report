@@ -151,8 +151,8 @@ Hardware Functional Correctness & Essential & \gls{fpga} \gls{neural_net} infere
 Synthesizable \gls{rtl} Output & Essential & \gls{rtl} generation must result in code synthesizable by industry-standard synthesizers. \\
 Constraint Specification & Essential & The hardware resource constraints (i.e. logical element usage) needs to be obtained by the user interface. \\
 Model Ingestion & Essential & The user-trained model must be successfully ingested into an intermediate data graph. \\
-Model Analysis & Essential & Must accurately calculate user's model requirements for operations such as convolutions, adders, etc. \\
-Model Compression & Essential & The compressed model must improve or maintain the model size on the \gls{fpga}. \\
+Model Analysis & Essential & Must accurately calculate user's model requirements for resources such as multipliers, adders, etc. \\
+Schedule Generation & Essential & Correct execution schedule must be generated for the generated hardware architecture. \\
 \gls{fpga} space constraints & Essential & Compressed model must be able to fit on the available \gls{fpga} area as specified by the user. \\
 Report of Optimization Metrics & Non-essential & Statistics such as \gls{fpga} area used and all optimizations made must be shown to the user so changes are transparent. \\
 \bottomrule
