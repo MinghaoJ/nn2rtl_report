@@ -5,7 +5,7 @@
 ]{cnn}{CNN}{Convolutional Neural Net}
 
 \newacronym[%
-    description={Directed Acyclic Graph, a graph with directed edges and contains no cycles.}%
+    description={Directed Acyclic Graph, a graph with directed edges that also contains no cycles.}%
 ]{dag}{DAG}{Directed Acyclic Graph}
 
 \newacronym[%
@@ -33,17 +33,18 @@
 ]{ram}{RAM}{Random Access Memory}
 
 \newacronym[%
-    description={Block RAM (see RAM). A type of memory block in FPGA fabrics that can be linked together to create memoriy banks of various dimensions.}%
+    description={Block RAM. A type of memory block in FPGA fabrics that can be linked together to create memoriy banks of various dimensions.},%
+    see={ram}%
 ]{bram}{BRAM}{Block RAM}
 
 \newacronym[%
-    description={Dynamic RAM (see RAM). RAM that cannot retain data indefinitely and requires periodic ``refreshing,'' where the data contents are read and re-written.}%
+    description={Dynamic RAM. RAM that cannot retain data indefinitely and requires periodic ``refreshing,'' where the data contents are read and re-written (compare with SRAM).},%
+    see={ram,sram}%
 ]{dram}{DRAM}{Dynamic RAM}
-\glssee{dram}{ram}
-\glssee[Compare with:]{dram}{sram}
 
 \newacronym[%
-    description={Static RAM (see RAM). RAM that retains its data so long as it is powered (compare with DRAM).}%
+    description={Static RAM. RAM that retains its data so long as it is powered (compare with DRAM).},%
+    see={ram,dram}%
 ]{sram}{SRAM}{Static RAM}
 
 \newacronym[%
@@ -83,7 +84,8 @@
 \newglossaryentry{filter}
 {
     name=Filter,
-    description={See Kernel.}
+    description={Synonym for kernel.},
+    see={kernel}
 }
 
 \newglossaryentry{kernel}
