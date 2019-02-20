@@ -299,11 +299,11 @@ The primary approach to mapping a \gls{neural_net} in hardware is to create dedi
     \caption{Direct hardware mapping \cite{Abdelouahab2017Hardware-Automa}}\label{fig:direct_hardware_mapping}
 \end{figure}
 
-A series of multipliers perform the multiplication between each of the matrix entries, followed by a series of adders which compute the sum of these products. This operation is referred to as a \gls{mac}. The dimensions of the inputs and outputs are well constrained within a layer, allowing the generation of \gls{rtl} modules by analyzing each layer.
+A series of multipliers perform the multiplication between each of the matrix entries, followed by a series of adders which compute the sum of these products. This operation is referred to as a \gls{mac}. The dimensions of the inputs and outputs are constrained within a layer, allowing the generation of \gls{rtl} modules by analyzing each layer.
 
 Each \gls{kernel} of the convolutional network would be mapped directly to hardware based on its different \glspl{filter}. As an example, the first layer of AlexNet has 96 \glspl{filter} of size 11\times 11\times 3. Each \gls{filter} performs 3025 matrix multiplications over the input volume \cite{Krizhevsky2017ImageNet-Classi}. If every multiplication operation is performed by dedicated hardware, a total of 105,415,200 multipliers would be required, which severely exceeds the capabilities of any \gls{fpga}. Abdelouahab et al. have determined that approximately 70\% of multiplications in a \gls{cnn} could be reduced to a zero, pass-through, or shift operation \cite{Abdelouahab2017Hardware-Automa}. However, despite the reduction, a fully parallel mapping would still result in over 30 million multipliers, an order of magnitude greater than the 1.5 million logic elements available in a relatively large \gls{fpga} \cite{Intel-Corp.2018IntelR-ArriaR-1}.
 
-Instead, each unique \gls{filter} receives dedicated hardware, and their matrix \gls{mac} operations are performed serially over the input volume. This results in a great reduction of the number of multipliers, to approximately 10,000 for the first layer of AlexNet. Thus, each layer of the \gls{neural_net} would map to a dedicated bank of logic that would perform its sequence of multiplications.
+Instead, each unique \gls{filter} receives dedicated hardware, and their matrix \gls{mac} operations are performed serially over the input volume. This results in a great reduction of the number of multipliers. Thus, each layer of the \gls{neural_net} would map to a dedicated bank of logic that would perform its sequence of multiplications.
 
 \subsubsection{Layer-Based Processing Banks}
 
@@ -317,9 +317,9 @@ In this architecture, the number of multipliers in a layer is greatly reduced. A
 
 \subsubsection{Layer-Scheduled Shared Multipliers}
 
-A third architectural approach shown in Figure \ref{fig:shared_multiplier} maximizes hardware reuse by implementing a shared multiplier bank between many layers. A central sequencer controls the memory addresses and execution order of each layer in the shared pipeline. Each different type of layer is mapped to a bank of resources which are reused every time the layer type is processed. The sequencer addresses the parameter memory and the input data memory to load the operands to the shared multiplier bank. The layer macro then processes the results of the multiplication based on the layer type \textemdash{} for instance, a convolution macro would contain a bank of adders and accumulators to sum the results of the multiplier bank. The results of the layer are then stored into the output data memory. When a layer has finished, the output memory is swapped with the input memory such that the next layer would use the results of the current layer, maximizing memory resource reutilization.
+A third architectural approach shown in Figure \ref{fig:shared_multiplier} maximizes hardware reuse by implementing a shared multiplier bank between many layers. A central sequencer controls the memory addresses and execution order of each layer in the shared pipeline. Each different type of layer is mapped to a bank of resources which are reused every time the layer type is processed. The sequencer addresses the parameter memory and the input data memory to load the operands to the shared multiplier bank. The layer macro then processes the results of the multiplication based on the layer type \textemdash{} for instance, a convolution macro would contain a bank of adders and accumulators to sum the results of the multiplier bank. The results of the layer are then stored into the output data memory. When a layer has finished, the output memory is swapped with the input memory so that the next layer uses the results of the current layer, maximizing memory reuse.
 
-\begin{figure}
+\begin{figure}[h]
     \centering
     \includegraphics{figures/shared_multiplier}
     \caption{Shared multiplier \cite{Ma2017An-automatic-RT}}\label{fig:shared_multiplier}
@@ -329,7 +329,7 @@ A third architectural approach shown in Figure \ref{fig:shared_multiplier} maxim
 
 The specification for this tool requires a hardware architecture class with the highest resource efficiency. That is, given a fixed \gls{fpga}, being able to fit the largest network at a high throughput. A weighted decision matrix is used to determine the most efficient solution. Between the proposed architectural approaches, several criteria are used to determine the best approach, shown in the Table \ref{tab:hw_arch_criteria}.
 
-\begin{table}[b]
+\begin{table}[h]
 \centering
 \caption{Hardware architecture class criteria}\label{tab:hw_arch_criteria}
 \begin{tabular}{lcccc}
@@ -341,7 +341,7 @@ The specification for this tool requires a hardware architecture class with the 
 \end{tabular}
 \end{table}
 
- Hardware efficiency is the ratio of used hardware to unused hardware in any given clock cycle. The maximum model size is quantified by the largest number of weights that can be stored using any given method on the \gls{fpga}, given no off-chip memory usage. These two factors determine whether the tool can implement practical \glspl{neural_net} given a fixed \gls{fpga} and are thus the higher weighted criteria.
+Hardware efficiency is the ratio of used hardware to unused hardware in any given clock cycle. The maximum model size is quantified by the largest number of weights that can be stored using any given method on the \gls{fpga}, given no off-chip memory usage. These two factors determine whether the tool can implement practical \glspl{neural_net} given a fixed \gls{fpga} and are thus the higher weighted criteria.
 
 The throughput is defined as the number of input vectors which can be processed in a clock cycle. The latency is the number of clock cycles between the input and output of the pipeline. These two metrics determine the usability of the network in a time-sensitive system. A theoretical estimate of the throughput and latency are used\textemdash{}the actual values are highly dependent on the \gls{cnn} model.
 
@@ -363,7 +363,7 @@ The maximum model size calculations assume that each parameter will be stored as
     P = \frac{\text{\# LEs}}{\text{\# LEs/param}} = \frac{1577000}{\frac{50452}{60000 \times 5 \text{ bits}} \times 8 \text{bits}} = 1.17 \times 10^6
 \end{equation}
 
-For the layer-based processing banks, the \gls{le} count is constrained by the \gls{bram} available on the chip. In this architecture, a part of the \gls{bram} needs to be used to buffer intermediate results of subsequent layer. Typically, parameter count increases with layer count and layer dimensions. It is not possible to define a function of parameter count to buffer size, since each \gls{neural_net} architecture is vastly different. To arrive at an estimate, two \gls{cnn} types are examined; AlexNet, a shallow \gls{cnn}, has 60M parameters and 650000 inter-layer values; MobileNet, a deep \gls{cnn}, has 1.7M parameters, and 7M inter-layer values. New networks, especially for image segmentation, tend to be deeper rather than wider \cite{Howard2017MobileNets:-Eff}. Thus, it is estimated that the parameters are allocated $\frac{1}{6}$ of the \gls{bram} resources.
+For the layer-based processing banks, the \gls{le} count is constrained by the \gls{bram} available on the chip. In this architecture, a part of the \gls{bram} needs to be used to buffer intermediate results of subsequent layer. Typically, parameter count increases with layer count and layer dimensions. It is not possible to define a function of parameter count to buffer size, since each \gls{neural_net} architecture is vastly different. To arrive at an estimate, two \gls{cnn} types are examined; AlexNet, a shallow \gls{cnn}, has 60M parameters and 650000 inter-layer values; MobileNet, a deep \gls{cnn}, has 1.7M parameters, and 7M inter-layer values. New convolution networks tend to be deeper rather than wider \cite{Howard2017MobileNets:-Eff}. Thus, it is estimated that the parameters are allocated $\frac{1}{6}$ of the \gls{bram} resources.
 \begin{equation}
     P = \frac{\text{BRAM bytes}}{6} = \frac{6750000 \text{ bytes}}{6} = 1.1 \times 10^7
 \end{equation}
@@ -381,7 +381,7 @@ A direct hardware map is again able to finish an image in fewer cycles than the 
 
 The weighted decision matrix in Table \ref{tab:decision_matrix} compiles and normalizes the scores for each architecture. Based on this analysis, the shared-multiplier method is the most effective approach for generating hardware. It maximizes hardware resource usage and the model size, making the \gls{rtl} generator most compatible with the most networks, especially new, deep networks with large parameter counts. While the direct hardware mapping method is potentially very fast, it still requires a vast amount of resources that severely limits the size of the \gls{neural_net} that can be implemented.
 
-\begin{table}
+\begin{table}[h]
 \centering
 \caption{Normalized weighted decision matrix}\label{tab:decision_matrix}
 \begin{tabular}{lccccc}
@@ -408,7 +408,7 @@ Once passed, the GraphDef object can be traversed by moving through each of the 
 
 \subsubsection{Footprint Estimation}
 
-The footprint estimator provides an approximate count of \glspl{mac} required to execute a GraphDef model. Studies have shown that convolutions take up to 90\% computation and runtime in a deep \gls{cnn} \cite{Wang2017Data-centric-co}. Due to the computation intensive nature of convolutions, only operations that involve convolutions or operations that are associated with convolutions are analyzed in the footprint estimator. The set of included operations are: Conv2D, Depthwise\_Conv2D, ReLu, MaxPool, SoftMax and Fully\_Connected. The number of \glspl{mac} require for each operation are specified in Table \ref{tab:macs_required}. $C$, $H$, and $W$ denote respectively channel count, height, and width.
+The footprint estimator provides an approximate count of \glspl{mac} required to execute a GraphDef model. Studies have shown that convolutions take up to 90\% computation and runtime in a deep \gls{cnn} \cite{Wang2017Data-centric-co}. Due to the computation intensive nature of convolutions, only operations that involve convolutions or operations that are associated with convolutions are analyzed in the footprint estimator. The set of included operations are: Conv2D, Depthwise\_Conv2D, and ReLU. The number of \glspl{mac} require for each operation are specified in Table \ref{tab:macs_required}. $C$, $H$, and $W$ denote respectively channel count, height, and width.
 
 \begin{table}
 \centering
@@ -420,9 +420,6 @@ Operation        & Equation \\
 Conv2D           & $C_\mathrm{in} \times C_\mathrm{out} \times H_\mathrm{out} \times W_\mathrm{out} \times H_\mathrm{kernel} \times W_\mathrm{kernel}$ \\
 Depthwise Conv2D & $H_\mathrm{kernel} \times W_\mathrm{kernel} \times C_\mathrm{in}$ \\
 ReLu             & $H_\mathrm{out} \times W_\mathrm{out} \times C_\mathrm{out}$ \\
-MaxPool          & $H_\mathrm{in} \times W_\mathrm{in} \times C_\mathrm{in}$ \\
-SoftMax          & $H_\mathrm{in} \times W_\mathrm{in} \times C_\mathrm{in}$ \\
-Fully Connected  & $C_\mathrm{in} \times C_\mathrm{out} \times H_\mathrm{out} \times W_\mathrm{out} \times H_\mathrm{in} \times W_\mathrm{in}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -512,37 +509,33 @@ Where the PAD represents the zero padding and STRIDE represents the stride lengt
 
 In Section \ref{sec:decision}, the shared-multiplier hardware framework was selected for the generated system. Figure \ref{fig:top_level} shows an example of a hardware system that can be generated, in this case based on MobileNet V2 \cite{Howard2017MobileNets:-Eff}. The framework of the hardware architecture remains fixed regardless of the \gls{neural_net} model.
 
-\begin{figure}
+\begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{figures/top_level}
 \caption{Hardware system top level framework}\label{fig:top_level}
 \end{figure}
 
-In practice, however, it is very expensive to implement data multiplexing for a large bank of multipliers, so the multiplier bank is split to accommodate for each layer type. Within each layer type, the dataflow from the memory to the multiplier bank and from the multiplier back to the memory must be consistent to remove the need for multiplexing, allowing faster operating hardware and simpler implementation at the cost of instantaneous hardware utilization. Convolution layers with identical \gls{kernel} dimensions can share processing pipelines, but different layers with different \gls{kernel} dimensions have different dataflow, and therefore are not able to share the same pipeline. Parameter memory is distributed to each of the separate processing pipelines so that it can be placed close to the logic that it will feed.
+In practice, however, it is very expensive to implement data multiplexing for a large bank of multipliers, so the multiplier bank is split to accommodate for each layer type. Within each layer type the dataflow must be consistent to remove the need for multiplexing, faster clock speeds at the cost of instantaneous hardware utilization. Convolution layers with identical \gls{kernel} dimensions can share processing pipelines, but different layers with different \gls{kernel} dimensions are not able to share the same pipeline. Parameter memory is distributed to each of the separate processing pipelines so that it can be placed close to the logic that it will feed.
 
-Figure \ref{fig:sequencer} shows a functional diagram of the operation sequencer block. The sequencer provides data flow control; it controls the addresses of the memories to provide the correct inputs to the multiplier bank; it also issues control signals for each layer-type macro. The sequencer reads a \gls{rom} storing microcode which describes the layer type and the loop parameters of each layer. This microcode is generated by a scheduler in model analysis.
+Figure \ref{fig:sequencer} shows a functional diagram of the operation sequencer block. The sequencer provides data flow control; it generates the addresses of the memories to provide the correct inputs to the multiplier bank; it also issues control signals for each layer-type macro. The sequencer reads a \gls{rom} storing microcode which describes the layer type and the loop parameters of each layer. This microcode is generated by a scheduler in model analysis.
 
-\begin{figure}
+\begin{figure}[h]
 \centering
 \includegraphics[width=0.6\textwidth]{figures/sequencer}
 \caption{Operation sequencer}\label{fig:sequencer}
 \end{figure}
 
-\glspl{fpga} typically contain distributed \gls{sram} arrays, called \glspl{bram}. In Intel \glspl{fpga}, the most common type of \gls{bram} cell is a \SI{20}{\kilo\bit} array referred to as a M20K cell. The control interface for \glspl{bram} are variable, allowing them to be instantiated with a variety of widths and depths. Several arrays can be combined by the vendor synthesizer tool to create a larger array. With this in mind, the tool is able to flexibly define the dimensions of the buffers in \gls{rtl} generation to best suit the \gls{neural_net}.
-
-The system architecture contains one large \gls{bram} array for storing layer weights, and one for storing inter-layer results. When one layer finishes its operations, the next layer uses its output as its input and stores its results in its previous layer's input area.
+\glspl{fpga} typically contain distributed \gls{sram} arrays, called \glspl{bram}. Several arrays can be combined by the vendor synthesis tool to create a larger array. With this in mind, the tool is able to flexibly define the dimensions of the buffers in \gls{rtl} generation to best suit the \gls{neural_net}. The system architecture contains one large \gls{bram} array for storing layer weights, and one for storing inter-layer results.
 
 \subsection{Macro Generation}\label{sec:macro_gen}
 
-A dedicated macro block is generated from a library of templates to process each type of layer (convolution, pooling, etc.) in the \gls{neural_net}. For layers of the same type, the same processing architecture is reused, with the scheduler coordinating different loop parameters using its microcode instructions. Convolution layers with different \gls{kernel} dimensions needs macro blocks which have different parameters but retain the same general architecture. The \gls{rtl} templates are highly parameterized so that their dimensions can be defined when they are instantiated.
-
-Each macro block is controlled by the sequencer to loop over the input matrix using instructions written in microcode. The required macro blocks for a layer type and their design parameters are generated using the formulas outlined in the model analysis section.
+A dedicated macro block is generated from a library of templates to process each type of layer (convolution, pooling, etc.) in the \gls{neural_net}. The \gls{rtl} templates are highly parameterized so that their dimensions can be defined when they are instantiated. Each macro block is controlled by the sequencer to loop over the input matrix using instructions written in microcode. The required macro blocks for a layer type and their design parameters are generated using the formulas outlined in the model analysis section.
 
 The convolution macro contains buffers to enable data reuse in the convolution operation, adders and accumulators to sums the results of multiplications, and \gls{relu} modules. Cascading adders sum the results of the multiplication and \gls{bias} parameters. The precise format of the adder tree will vary based on degree of loop unrolling, \gls{filter} dimensions and different types of convolutions. In some cases, the additions may need to be split over multiple multiplication cycles, and therefore accumulators are required to sum each consecutive result. Following the \gls{relu} operation, the results are stored in a final output register bank to be written to memory.
 
-Depth-wise convolutions are an example of a convolution layer with a different adder structure, and are used in MobileNets \cite{Howard2017MobileNets:-Eff}. They specify a single \gls{kernel} for every input layer, and each \gls{kernel} only convolves over that layer. No accumulation over input layers are required in depth-wise layers, allowing more parallel adder trees to further increase parallelism. However, this makes the depth-wise convolution pipeline incompatible with regular convolution pipelines, which requires accumulation across the input layers. % TODO: get rid
+% Depth-wise convolutions are an example of a convolution layer with a different adder structure, and are used in MobileNets \cite{Howard2017MobileNets:-Eff}. They specify a single \gls{kernel} for every input layer, and each \gls{kernel} only convolves over that layer. No accumulation over input layers are required in depth-wise layers, allowing more parallel adder trees to further increase parallelism. However, this makes the depth-wise convolution pipeline incompatible with regular convolution pipelines, which requires accumulation across the input layers. % TODO: get rid
 
-Every type of macro will be pipelined to maximize clock frequency. Each functional block of the macro block will be divided by a pipeline stage, as shown in Figure \ref{fig:convolution_macro} with the brackets to the right. To generally maximize data reuse and parallelism where resources are available, several \glspl{kernel} can be loaded to several parallel multiplier banks, adders, and accumulators (collectively named a `processing thread') using the same input data. This results in some arbitration required at the output bus by the schedule to avoid conflicts in result write out. There is usually a long latency before the next batch of outputs need to be written out while the next layer is being processed, allowing each of the separate processing threads to write out sequentially. Since the bulk of the processing is done in parallel, this method allows increased parallelism where hardware resources are available.
+Each functional block of the macro block will be divided by a pipeline stage, as shown in Figure \ref{fig:convolution_macro} with the brackets to the right. To generally maximize data reuse and parallelism where resources are available, several \glspl{kernel} can be loaded to several parallel multiplier banks, adders, and accumulators (collectively named a `processing thread') using the same input data. There is usually a long latency before the next batch of outputs need to be written out while the next layer is being processed, allowing each of the separate processing threads to write out sequentially. Since the bulk of the processing is done in parallel, this method allows increased parallelism where hardware resources are available.
 
 \begin{figure}
 \centering
@@ -550,15 +543,15 @@ Every type of macro will be pipelined to maximize clock frequency. Each function
 \caption{Convolution macro block \cite{Ma2017An-automatic-RT}}\label{fig:convolution_macro}
 \end{figure}
 
-Modern convolutional \glspl{neural_net} often contain residual blocks (Howard, et al., 2017). Residual blocks add a connection between two layers of the same dimensions, summing the input of the first layer to the output of the second layer. This is shown in Figure \ref{fig:residual_addition}. To accommodate for this operation, a macro block containing a memory for temporarily storing the inputs to the first layer when it is being processed, and then adding the results of the second layer after it has been processed, is created. The residual pipeline is a simple adder array which adds two equal dimension arrays. It is controlled by the sequencer using dedicated microcode for flagging residual layers.
+% Modern convolutional \glspl{neural_net} often contain residual blocks (Howard, et al., 2017). Residual blocks add a connection between two layers of the same dimensions, summing the input of the first layer to the output of the second layer. This is shown in Figure \ref{fig:residual_addition}. To accommodate for this operation, a macro block containing a memory for temporarily storing the inputs to the first layer when it is being processed, and then adding the results of the second layer after it has been processed, is created. The residual pipeline is a simple adder array which adds two equal dimension arrays. It is controlled by the sequencer using dedicated microcode for flagging residual layers.
 
-\begin{figure}
-\centering
-\includegraphics{figures/residual_addition}
-\caption{Residual addition}\label{fig:residual_addition}
-\end{figure}
+% \begin{figure}
+% \centering
+% \includegraphics{figures/residual_addition}
+% \caption{Residual addition}\label{fig:residual_addition}
+% \end{figure}
 
-The multiplier bank must support the largest number required for a given layer and unrolling scheme in the network. Since multiplication hardware implemented using \glspl{le} are expensive, \glspl{fpga} typically include dedicated multiplication hardware in the form of hardened multipliers and DSPs \cite{Intel-Corp.2018IntelR-ArriaR-1}. Therefore, the multiplier bank will primarily be synthesized as hardened multipliers and DSPs using \gls{rtl} directives. \Glspl{le} will be used only when hardened resources are saturated.
+% The multiplier bank must support the largest number required for a given layer and unrolling scheme in the network. Since multiplication hardware implemented using \glspl{le} are expensive, \glspl{fpga} typically include dedicated multiplication hardware in the form of hardened multipliers and DSPs \cite{Intel-Corp.2018IntelR-ArriaR-1}. Therefore, the multiplier bank will primarily be synthesized as hardened multipliers and DSPs using \gls{rtl} directives. \Glspl{le} will be used only when hardened resources are saturated.
 
 \subsection{RTL Generation}\label{sec:rtl_gen}
 
@@ -601,34 +594,34 @@ The functional model for this system is a pure software component that is mainly
     \item Divisions are not allowed
 \end{enumerate}
 
-The various operations involved in computing a convolutional \glspl{neural_net} can be generalized to the following: load, store, add, multiply, \gls{relu} and accumulate. The functional model simulates hardware execution by creating a component for each operation. The load operation fetches input and weights from their respective memory bank and feeds them into \gls{mac} blocks. Store writes the result of a \gls{mac} to the output memory. Add and multiply operations represent adders and multipliers in hardware. Listing \ref{lst:databank_init} contains a code snippet that initializes the databank of the functional model. Input \glspl{tensor}, translated from Tensorflow, of shape 4D is reshaped into a 2D array and stored in the databank. The databank is constructed as a two-dimensional array to match the physical layout of embedded memory on the \gls{fpga}. This allows the functional model to use the same memory addressing scheme as hardware.
+The various operations involved in computing a convolutional \glspl{neural_net} can be generalized to the following: load, store, add, multiply, \gls{relu} and accumulate. The functional model simulates hardware execution by creating a component for each operation. The load operation fetches input and weights from their respective memory bank and feeds them into \gls{mac} blocks. Store writes the result of a \gls{mac} to the output memory. Add and multiply operations represent adders and multipliers in hardware. % Listing \ref{lst:databank_init} contains a code snippet that initializes the databank of the functional model. Input \glspl{tensor}, translated from Tensorflow, of shape 4D is reshaped into a 2D array and stored in the databank. The databank is constructed as a two-dimensional array to match the physical layout of embedded memory on the \gls{fpga}. This allows the functional model to use the same memory addressing scheme as hardware.
 
-\begin{figure}
-\centering
-\begin{lstlisting}[caption={Databank initialization in software}, label=lst:databank_init, language=Python]
-def init_databank(self, preloaded_bank=None):
-    if preloaded_bank is not None:
-        self.databank = preloaded_bank
-        self.write_hex_file(self.databank, 'data_bank.old')
-        return
+% \begin{figure}
+% \centering
+% \begin{lstlisting}[caption={Databank initialization in software}, label=lst:databank_init, language=Python]
+% def init_databank(self, preloaded_bank=None):
+%     if preloaded_bank is not None:
+%         self.databank = preloaded_bank
+%         self.write_hex_file(self.databank, 'data_bank.old')
+%         return
 
-    # This is only valid for one model layer. x,y, and m will change
-    # from layer to layer
-    input_bytes = mdl.input_m * mdl.input_x * mdl.input_y
-    output_bytes = mdl.kernel_count * mdl.input_x * mdl.input_y
+%     # This is only valid for one model layer. x,y, and m will change
+%     # from layer to layer
+%     input_bytes = mdl.input_m * mdl.input_x * mdl.input_y
+%     output_bytes = mdl.kernel_count * mdl.input_x * mdl.input_y
 
-    # Build the input data bank
-    input_pixels = np.ones(input_bytes, dtype='float32')
-    output_pixels = np.zeros(output_bytes, dtype='float32')
+%     # Build the input data bank
+%     input_pixels = np.ones(input_bytes, dtype='float32')
+%     output_pixels = np.zeros(output_bytes, dtype='float32')
 
-    concat_array = np.concatenate([input_pixels, output_pixels])
-    self.databank = np.reshape(concat_array, [-1, mdl.databus_size])
-\end{lstlisting}
-\end{figure}
+%     concat_array = np.concatenate([input_pixels, output_pixels])
+%     self.databank = np.reshape(concat_array, [-1, mdl.databus_size])
+% \end{lstlisting}
+% \end{figure}
 
 In addition to simulating hardware operations, the functional model is also responsible for generating the opcode which contains the instruction and operating parameters for the hardware. The general structure of an opcode is illustrated in Listing \ref{lst:opcode}.
 
-\begin{figure}
+\begin{figure}[hb]
 \centering
 \begin{lstlisting}[caption={General opcode format}, label=lst:opcode]
 opcode {
@@ -645,7 +638,7 @@ opcode {
 
 The most important fields in an opcode are the base counters. The hardware relies on these counters to load input data and weights at the appropriate offsets to account for the shifting of \gls{kernel} window. The opcode generated by the function model can be directly used in hardware without further processing because the memory banks in the functional model are arranged in the exact same way memory banks are arranged in hardware. Listing \ref{lst:1x1_sim} shows the simulation of a 1x1 convolution operation using techniques, such as loop unrolling, described in earlier sections.
 
-\begin{figure}
+\begin{figure}[hb]
 \centering
 \begin{lstlisting}[caption={Simulation of 1x1 convolution in functional model}, label=lst:1x1_sim, language=Python]
 def simulate(self, input_base, output_base, kernel_base, kernel_count,
@@ -691,7 +684,7 @@ def simulate(self, input_base, output_base, kernel_base, kernel_count,
 
 \subsection{Model Analysis Code Snippets and Outputs}
 
-The model analysis is a phase that bridges that software TensorFlow model (presented at this stage as a tflite file) and the hardware architecture created for the model. In this phase, a script is used to extract the parameters required for designing the components for the final hardware. This extracts general information on the network being read without loss of generality:
+The model analysis is a phase that bridges the software TensorFlow model (presented at this stage as a .tflite file) and the hardware architecture created for the model. In this phase, a script is used to extract the parameters required for designing the components for the final hardware. This extracts general information on the network being read without loss of generality:
 \begin{enumerate}
 \item Type and number of layers in the mobile network
 \item Size of the network inputs for each layer
@@ -700,12 +693,9 @@ The model analysis is a phase that bridges that software TensorFlow model (prese
 
 The script first ingests the model provided as a .tflite formatted file. Listing \ref{lst:ingest_tflite} shows a snippet of the code used to ingest the compressed and quantized tflite model in order to extract the necessary information.
 
-\begin{figure}
+\begin{figure}[h]
 \centering
 \begin{lstlisting}[caption={Code for ingesting a .tflite model}, label=lst:ingest_tflite, language=Python]
-import numpy as np
-import tensorflow as tf
-
 # Load TFLite model and allocate tensors.
 inter = tf.lite.Interpreter(model_path="onebyone.tflite")
 inter.allocate_tensors()
@@ -716,9 +706,9 @@ output_details = inter.get_output_details()
 \end{lstlisting}
 \end{figure}
 
-This base information on the input size of the layers is to dictate intermediate structural variables like the size of the data bus required to process the network as well as the size of the data bank. Finally, the information is used to produce layer-specific specifications as shown in Listing \ref{lst:general_specs}. The code generates the specifications for a 1 \times 1 convolution layer in the MobileNet V2 fed into the model analysis. The specs include metrics like the size of the multiplier bank required, size of the \gls{kernel} bus\textemdash{}which is specific to each layer\textemdash{}and the size of the write buffer required. The specs are stored as an object for easy access by the scheduler to produce generate the functional model as well as the op-code.
+This base information on the input size of the layers is to dictate intermediate structural variables like the size of the data bus required to process the network as well as the size of the data bank. Finally, the information is used to produce layer-specific specifications as shown in Listing \ref{lst:general_specs}. The code generates the specifications for a 1 \times 1 convolution layer in the MobileNet V2 fed into the model analysis. The specifications include metrics like the size of the multiplier bank required, size of the \gls{kernel} bus\textemdash{}which is specific to each layer\textemdash{}and the size of the write buffer required. The specifications are stored as an object for easy access by the scheduler to produce generate the functional model as well as the op-code.
 
-\begin{figure}
+\begin{figure}[h]
 \centering
 \begin{lstlisting}[caption={Code for generating general specifications}, label=lst:general_specs, language=Python]
 layer = Dict()
@@ -737,7 +727,7 @@ layer.tiles_per_layer = math.ceil(gen.input_x * gen.input_y / gen.databus_size)
 \end{lstlisting}
 \end{figure}
 
-The complete output of the model is shown in Figure \ref{fig:model_analysis_output}, the output shows the analysis of a sample MobileNetV2 to produce the general specifications as well as the specifications for a 1 \times 1 convolution layer. This output is secondary to the specs dictionary create by the model analysis script and is used primarily for debugging purposes and in the interest of transparency to the user.
+The complete output of the model is shown in Figure \ref{fig:model_analysis_output}, the output shows the analysis of a sample MobileNetV2 to produce the general specifications as well as the specifications for a 1 \times 1 convolution layer. This output is secondary to the specifications dictionary create by the model analysis script and is used primarily for debugging purposes and in the interest of transparency to the user.
 
 \begin{figure}
 \centering
@@ -785,43 +775,11 @@ This type of implementation results in Verilog native hardware generation suppor
 
 Another critical aspect of the hardware structure is the scheduling of the processing pipelines and memory addresses. To maintain identical functionality with a CPU implementation of the same network, memory addresses and control signals need to be correctly generated from the base values in the microcode so that the correct inputs are fed to the multipliers and accumulation is correctly performed.
 
-Listing \ref{lst:sequencer_fsm_1} contains sections of abbreviated code from a sequencer state machine for 1x1 convolutions. The state machine contains the counting logic to iterate through the four loops outlined in \ref{sec:scheduler}. In this sequencer state machine, the `CH\_LOOP' state starting at line \ref{line:ch_loop} contains the counting logic and control signal generation to accumulate multiplication results over all input channels. The address offset registers used in lines \ref{line:in_offset} and \ref{line:kernel_offset} stores the offset values to add to the base address in the microcode to obtain the correct set of data. Loop counters are compared to microcode base values (such as in line \ref{line:loop_compare}) to correctly loop over the input \glspl{tensor} and \glspl{kernel}.
+Listing \ref{lst:sequencer_fsm} contains sections of abbreviated code from a sequencer state machine for 1x1 convolutions. The state machine contains the counting logic to iterate through the four loops outlined in \ref{sec:scheduler}. The address offset registers used in lines \ref{line:kernel_offset} and \ref{line:in_offset} stores the offset values to add to the base address in the microcode to obtain the correct set of data. Loop counters are compared to microcode base values (such as in line \ref{line:loop_compare}) to correctly loop over the input \glspl{tensor} and \glspl{kernel}.
 
-\begin{figure}
+\begin{figure}[h]
 \centering
-\begin{lstlisting}[caption={Sequencer state machine part 1}, label=lst:sequencer_fsm_1, language=Verilog, escapechar=|, numbers=left, firstnumber=201]
-IDLE: begin
-   // wait to start loop
-end
-
-CH_LOOP: begin                // loop over all input channels |\label{line:ch_loop}|
-   pipeline_rstn_next = 1'b1; // unreset the pipeline
-   mult_enable_next   = 1'b1; // enable multipliers
-   acc_en_next        = 1'b1; // enable accumulation
-   ...
-
-   if (reg_channel_count == NUM_INPUT_CHANNELS-1) begin |\label{line:loop_compare}|
-       // finished accumulation over all input channels, write out current tile
-       next                  = WR_OUT;
-   end else begin
-       // haven't finished accumulation, read next input channel to accumulate
-       // add offset to read address
-       in_ch_offset_next     = reg_in_ch_offset + NUM_TILES; |\label{line:in_offset}|
-       // add offset to kernel address
-       kernel_ch_offset_next = reg_kern_ch_offset + 1; |\label{line:kernel_offset}|
-       // increment channel counter
-       channel_count_next    = reg_channel_count + 1;
-       // continue looping
-       next                  = CH_LOOP;
-   end
-\end{lstlisting}
-\end{figure}
-
-Listing \ref{lst:sequencer_fsm_2} contains the last state of the sequencer state machine. The `WR\_OUT' state contains the logic to issue write out signals to the pipeline the memory and to re-evaluate the next memory base addresses to read from. Depending on the size of the layer, the number of iterations required for the pipeline to accumulate all the results required to write out differs. Again, the microcode contains the parameters specifying the number of loops.
-
-\begin{figure}
-\centering
-\begin{lstlisting}[caption={Sequencer state machine part 2}, label=lst:sequencer_fsm_2, language=Verilog]
+\begin{lstlisting}[caption={Sequencer state machine}, label=lst:sequencer_fsm, language=Verilog, escapechar=|, numbers=left]
 WR_OUT: begin
     // issuing writeout
     pipeline_rstn_next          = 1'b0; // reset the pipeline
@@ -836,17 +794,17 @@ WR_OUT: begin
 
     if (reg_kernel_count == NUM_KERNELS) begin
         next                    = IDLE;
-    end else if (reg_tile_count == NUM_TILES-1) begin
+    end else if (reg_tile_count == NUM_TILES-1) begin |\label{line:loop_compare}|
         // finished full image, do next kernel
         next                    = CH_LOOP;
         // increment kernel counter
         kernel_count_next  = reg_kernel_count + 1;
         // reset tile count
         tile_count_next    = 0;
-        // kernel addr offs
-        kernel_offset_next = reg_kernel_offset + NUM_INPUT_CHANNELS;
+        // kernel addr offset
+        kernel_offset_next = reg_kernel_offset + NUM_INPUT_CHANNELS; |\label{line:kernel_offset}|
         // data addr offset
-        out_ch_offset_next = reg_out_ch_offset + NUM_TILES;
+        out_ch_offset_next = reg_out_ch_offset + NUM_TILES; |\label{line:in_offset}|
         tile_offset_next   = 0;
     end else begin
         // not done image,  at next tile and loop again
@@ -858,13 +816,13 @@ end
 \end{lstlisting}
 \end{figure}
 
-When the processing pipeline has finished accumulating, the state machine issues a write out address and enable to the memory, and the output of the pipeline is written to memory at the generated address. In this state, the loop variables are re-evaluated to arrive at the correct set of parameters with which to start the next loop. The inner loop counters and address offsets are reset, and the state returns to `CH\_LOOP' until every \gls{kernel} has been processed.
+When the processing pipeline has finished accumulating, the state machine issues a write out address and enable to the memory, and the output of the pipeline is written to memory at the generated address. In this state, the loop variables are re-evaluated to arrive at the correct set of parameters with which to start the next loop. The inner loop counters and address offsets are reset, and the state machine returns to looping over the next set of weights and inputs.
 
 This sequence of operations reflects the loops outlined in \ref{sec:scheduler}, with the innermost loop (for weights in \gls{kernel}) fully unrolled, and the second loop (for input pixel/value in image/volume) partially unrolled. This matches the hardware system design in \ref{sec:top_level_framework} and \ref{sec:macro_gen}, optimizing for limited on-chip memory and maximizing data reuse.
 
 Figure \ref{fig:rtl_simulation_waveform} shows example waveforms from \gls{rtl} simulation of the sequencer and macro block implementing a 1x1 convolution. All signals and busses showing the flow and computation of data is shown from top-to-bottom, starting by loading one frame from main memory and ending by writing back to a different location in memory.
 
-\begin{figure}
+\begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{figures/rtl_simulation_waveform}
 \caption{\Gls{rtl} simulation waveform for 1x1 convolution hardware}\label{fig:rtl_simulation_waveform}
