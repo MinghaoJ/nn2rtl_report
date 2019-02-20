@@ -46,9 +46,6 @@
 \RequirePackage[top=\margintb, bottom=\margintb, left=\marginl, right=\marginr]{geometry}
 \RequirePackage{setspace}
 \newcommand{\uwwkrpt@spacing}{\onehalfspacing}
-\newlength{\uwwkrpt@parskip}
-\setlength{\uwwkrpt@parskip}{1ex}
-\setlength{\parskip}{\uwwkrpt@parskip}
 \RequirePackage{url}
 \urlstyle{sf}
 \renewcommand{\title}[1]{%
@@ -95,6 +92,7 @@
 \renewcommand{\maketitle}{%
     \pagenumbering{roman}%
     \begin{titlepage}
+        \setlength{\parskip}{1ex}
         \begin{singlespacing}
             \let\footnotesize\small
             \let\footnoterule\relax
