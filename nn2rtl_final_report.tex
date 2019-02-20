@@ -257,28 +257,29 @@ One of the biggest challenge in deploying a \gls{neural_net} to an FPGA is the c
 \end{gather}
 where $\Delta x$ represents the quantization step, b the bit width and $\sigma_x$ the offset value. $x_\mathrm{max}$ and $x_\mathrm{min}$ are the maximum and minimum values in floating point representation \cite{Sheng2018A-Quantization-}. The model quantization process involves traversing each node in the model graph obtained from the previous step in the pipeline and quantizing input and \gls{weight} values to 8-bit fixed point values. The model quantization process involves traversing each node in the model graph obtained from the previous step in the pipeline and quantizing the input and \gls{weight} values to 8-bit fixed point values.
 
-TensorFlow provides a toolset under TensorFlow Lite containing tools for quantizing a fully trained inference model. The code snippet in Listing \ref{lst:optimize} shows the Google's TensorFlow Lite example provided for using graph transforms to quantize weights and strip unused nodes.
+TensorFlow provides a toolset under TensorFlow Lite containing tools for quantizing a fully trained inference model. The final compressed model is converted back to a Protocol Buffer file and saved to the output path specified in the configuration file.
+%The code snippet in Listing \ref{lst:optimize} shows the Google's TensorFlow Lite example provided for using graph transforms to quantize weights and strip unused nodes.
 
-\begin{figure}
-\centering
-\begin{lstlisting}[caption={Code snippet to optimize a trained inference model}, label=lst:optimize, language=bash]
-bazel build tensorflow/tools/graph_transforms:transform_graph
-bazel-bin/tensorflow/tools/graph_transforms/transform_graph \
---in_graph=/tmp/frozen_inference_model.pb \
---outputs="softmax" --out_graph=/tmp/quantized_graph.pb \
---transforms='
-add_default_attributes
-strip_unused_nodes(type=float, shape="1,299,299,3")
-remove_nodes(op=Identity, op=CheckNumerics)
-fold_constants(ignore_errors=true)
-fold_batch_norms fold_old_batch_norms
-quantize_weights
-quantize_nodes strip_unused_nodes sort_by_execution_order
-'
-\end{lstlisting}
-\end{figure}
+% \begin{figure}
+% \centering
+% \begin{lstlisting}[caption={Code snippet to optimize a trained inference model}, label=lst:optimize, language=bash]
+% bazel build tensorflow/tools/graph_transforms:transform_graph
+% bazel-bin/tensorflow/tools/graph_transforms/transform_graph \
+% --in_graph=/tmp/frozen_inference_model.pb \
+% --outputs="softmax" --out_graph=/tmp/quantized_graph.pb \
+% --transforms='
+% add_default_attributes
+% strip_unused_nodes(type=float, shape="1,299,299,3")
+% remove_nodes(op=Identity, op=CheckNumerics)
+% fold_constants(ignore_errors=true)
+% fold_batch_norms fold_old_batch_norms
+% quantize_weights
+% quantize_nodes strip_unused_nodes sort_by_execution_order
+% '
+% \end{lstlisting}
+% \end{figure}
 
-A more targeted pruning technique can be applied when considering the physical manifestation of the multiplications required within each convolution layer. The result of quantization of \gls{kernel} weights in convolution layers to an 8-bit fixed-point representation is that large portion of the \gls{cnn} parameters can be represented by zero, one or a power of two \cite{Abdelouahab2017Hardware-Automa}. This means that the physical hardware representing the multiplication can be removed or replaced with a wire or shift register. This intelligent design can reduce the resource utilization in the \gls{fpga} implementation. This can be especially efficient given that the multiplication with a set of weights in a quantized \gls{kernel} can be done in a loop over multiple cycles for a given set of input feature maps. This means that the physical hardware representing the multiplication can be removed or replaced with a wire or shift register. The final compressed model is converted back to a Protocol Buffer file and saved to the output path specified in the configuration file.
+%A more targeted pruning technique can be applied when considering the physical manifestation of the multiplications required within each convolution layer. The result of quantization of \gls{kernel} weights in convolution layers to an 8-bit fixed-point representation is that large portion of the \gls{cnn} parameters can be represented by zero, one or a power of two \cite{Abdelouahab2017Hardware-Automa}. This means that the physical hardware representing the multiplication can be removed or replaced with a wire or shift register. This intelligent design can reduce the resource utilization in the \gls{fpga} implementation. This can be especially efficient given that the multiplication with a set of weights in a quantized \gls{kernel} can be done in a loop over multiple cycles for a given set of input feature maps. This means that the physical hardware representing the multiplication can be removed or replaced with a wire or shift register. 
 
 \subsection{Hardware Architecture Generation}
 
@@ -302,7 +303,7 @@ A series of multipliers perform the multiplication between each of the matrix en
 
 Each \gls{kernel} of the convolutional network would be mapped directly to hardware based on its different \glspl{filter}. As an example, the first layer of AlexNet has 96 \glspl{filter} of size 11\times 11\times 3. Each \gls{filter} performs 3025 matrix multiplications over the input volume \cite{Krizhevsky2017ImageNet-Classi}. If every multiplication operation is performed by dedicated hardware, a total of 105,415,200 multipliers would be required, which severely exceeds the capabilities of any \gls{fpga}. Abdelouahab et al. have determined that approximately 70\% of multiplications in a \gls{cnn} could be reduced to a zero, pass-through, or shift operation \cite{Abdelouahab2017Hardware-Automa}. However, despite the reduction, a fully parallel mapping would still result in over 30 million multipliers, an order of magnitude greater than the 1.5 million logic elements available in a relatively large \gls{fpga} \cite{Intel-Corp.2018IntelR-ArriaR-1}.
 
-Instead, each unique \gls{filter} receives dedicated hardware, and their matrix \gls{mac} operations are performed serially over the input volume. This results in a great reduction of the number of multipliers, to approximately 10,000 for the first layer of AlexNet. Thus, each layer of the \gls{neural_net} would map to a dedicated bank of logic that would perform its sequence of multiplications. Buffers are inserted between layers to resolve timing closure, creating a pipeline.
+Instead, each unique \gls{filter} receives dedicated hardware, and their matrix \gls{mac} operations are performed serially over the input volume. This results in a great reduction of the number of multipliers, to approximately 10,000 for the first layer of AlexNet. Thus, each layer of the \gls{neural_net} would map to a dedicated bank of logic that would perform its sequence of multiplications.
 
 \subsubsection{Layer-Based Processing Banks}
 
